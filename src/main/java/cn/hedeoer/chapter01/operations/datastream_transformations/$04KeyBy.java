@@ -11,6 +11,9 @@ import org.apache.flink.table.planner.expressions.In;
 public class $04KeyBy {
     /**
      * 将车程记录按照乘客人数分组
+     * keyBy使用的注意事项：
+     * 1. key的类型必须是区分不同的，在java中，表现在是否重写hashcode方法，是否重写，取决于对java实列不同的业务定义
+     * 2. 如果key的类型是数组， 当前的版本是不可以使用keyBy算子的
      * @param args
      */
     public static void main(String[] args) throws Exception {
@@ -35,6 +38,14 @@ public class $04KeyBy {
 //22> 58,END,2020-01-01T13:02:20Z,-73.92237,40.689713,-73.832054,40.804653,3,2013000122,2013000122,James-Quinn-Helen
 //22> 214,START,2020-01-01T13:11:20Z,-73.957634,40.64483,-73.84096,40.79333,3,2013000167,2013000167,George-Nancy-Frank
 //22> 225,START,2020-01-01T13:15:00Z,-73.946884,40.658516,-73.829735,40.80761,3,2013000167,2013000167,James-David-Peter
+
+        // key的类型为数组类型，即将报错：Type BasicArrayTypeInfo<String> cannot be used as key. Contained UNSUPPORTED key types:
+//        source.keyBy(new KeySelector<TaxiRide, String[]>() {
+//            @Override
+//            public String[] getKey(TaxiRide value) throws Exception {
+//                return value.passengerNames;
+//            }
+//        }).print();
                 env.execute();
     }
 }
