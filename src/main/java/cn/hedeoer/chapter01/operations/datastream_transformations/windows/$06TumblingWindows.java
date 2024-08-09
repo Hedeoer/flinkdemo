@@ -37,6 +37,36 @@ import java.util.concurrent.TimeUnit;
 
 import static cn.hedeoer.common.utils.SinkUtil.getFileSink;
 
+/**
+ * flink windows算子
+ *
+ * keyby类型的window
+ * stream
+ *        .keyBy(...)               <-  keyed versus non-keyed windows
+ *        .window(...)              <-  required: "assigner"
+ *       [.trigger(...)]            <-  optional: "trigger" (else default trigger)
+ *       [.evictor(...)]            <-  optional: "evictor" (else no evictor)
+ *       [.allowedLateness(...)]    <-  optional: "lateness" (else zero)
+ *       [.sideOutputLateData(...)] <-  optional: "output tag" (else no side output for late data)
+ *        .reduce/aggregate/apply()      <-  required: "function"
+ *       [.getSideOutput(...)]      <-  optional: "output tag"
+ *
+ *windowAll类型
+ * stream
+ *        .windowAll(...)           <-  required: "assigner"
+ *       [.trigger(...)]            <-  optional: "trigger" (else default trigger)
+ *       [.evictor(...)]            <-  optional: "evictor" (else no evictor)
+ *       [.allowedLateness(...)]    <-  optional: "lateness" (else zero)
+ *       [.sideOutputLateData(...)] <-  optional: "output tag" (else no side output for late data)
+ *        .reduce/aggregate/apply()      <-  required: "function"
+ *       [.getSideOutput(...)]      <-  optional: "output tag"
+ *
+ *TumblingEventTimeWindows of(Time size, Time offset)
+ * size:窗口大小
+ * offset:窗口的偏移量，常用于调整时区使用
+ * 说明见https://nightlies.apache.org/flink/flink-docs-release-1.13/docs/dev/datastream/operators/windows/#tumbling-windows
+ *
+ */
 public class $06TumblingWindows {
     /**
      * 每隔5秒统计一次过去5秒共有多少车程
