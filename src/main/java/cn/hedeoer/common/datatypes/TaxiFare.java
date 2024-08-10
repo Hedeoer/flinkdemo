@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
-/**
+/*
  * A TaxiFare has payment information about a taxi ride.
  *
  * <p>It has these fields in common with the TaxiRides - the rideId - the taxiId - the driverId -

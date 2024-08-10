@@ -17,6 +17,16 @@ public class TimeFormat {
         return result;
     }
 
+    public static String longToString(long time,boolean isUTC)
+    {
+        String result = null;
+        if (isUTC) {
+            Instant instant = Instant.ofEpochMilli(time);
+            result = DateTimeFormatter.ISO_INSTANT.format(instant);
+        }
+        return result;
+    }
+
     public static void main(String[] args) {
         System.out.println(TimeFormat.longToString(1723095813709l));
     }

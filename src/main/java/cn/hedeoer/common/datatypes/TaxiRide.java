@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
+/*
  * A TaxiRide is a taxi ride event. There are two types of events, a taxi ride start event and a
  * taxi ride end event. The isStart flag specifies the type of the event.
  *
