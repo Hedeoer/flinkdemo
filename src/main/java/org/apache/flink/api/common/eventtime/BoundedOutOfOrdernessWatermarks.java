@@ -63,7 +63,7 @@ public class BoundedOutOfOrdernessWatermarks<T> implements WatermarkGenerator<T>
     public void onEvent(T event, long eventTimestamp, WatermarkOutput output) {
         maxTimestamp = Math.max(maxTimestamp, eventTimestamp);
         System.out.println("接受了数据：" + event);
-        System.out.println(Thread.currentThread().getName()+"发送水印：" + (maxTimestamp - outOfOrdernessMillis - 1));
+//        System.out.println(Thread.currentThread().getName()+"发送水印：" + (maxTimestamp - outOfOrdernessMillis - 1));
 
     }
 
