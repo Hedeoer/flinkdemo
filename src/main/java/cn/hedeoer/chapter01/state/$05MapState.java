@@ -15,7 +15,9 @@ import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 
 import java.util.Map;
+
 // keyState 之 mapstate
+
 public class $05MapState {
     // 每个用户的页面对应的点击次数
     public static void main(String[] args) throws Exception {
