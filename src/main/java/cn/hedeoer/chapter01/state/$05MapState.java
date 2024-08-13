@@ -63,5 +63,8 @@ public class $05MapState {
                 out.collect(value.user + " 点击了　" +entry.getKey() + ": " + entry.getValue() +"次");
             }
         }
+
+
     }
+
 }
