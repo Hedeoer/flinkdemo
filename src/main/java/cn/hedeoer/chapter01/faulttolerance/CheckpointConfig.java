@@ -1,6 +1,6 @@
-package cn.hedeoer.chapter01.operations.datastream_transformations.windows;
+package cn.hedeoer.chapter01.faulttolerance;
 
-
+import cn.hedeoer.chapter01.operations.datastream_transformations.windows.$09ProcessWindowFuncationWithAggregation;
 import cn.hedeoer.common.datatypes.TaxiFare;
 import cn.hedeoer.common.sources.TaxiFareGenerator;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -9,35 +9,54 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
-import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.api.windowing.triggers.Trigger;
-import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
-import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
-import org.apache.flink.streaming.api.windowing.windows.Window;
 import org.apache.flink.util.Collector;
 
 import java.time.Duration;
 
-/**
- * ProcessWindowFunction with Incremental Aggregation练习使用
- */
-public class $09ProcessWindowFuncationWithAggregation {
-
-    /**
-     * 每5小时求取每个司机每次车程的平均收入
-     *
-     * @param args
-     */
+public class CheckpointConfig {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStreamSource<TaxiFare> source = env.addSource(new TaxiFareGenerator());
+
+        // checkpoint设置
+        env.enableCheckpointing(1000);
+        // 其他可选配置如下：
+        // 设置语义
+        env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
+        // 设置两个检查点之间的最小时间间隔
+        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
+        // 设置执行Checkpoint操作时的超时时间
+        env.getCheckpointConfig().setCheckpointTimeout(60000);
+        // 设置最大并发执行的检查点的数量
+        env.getCheckpointConfig().setMaxConcurrentCheckpoints(1);
+        // only two consecutive checkpoint failures are tolerated
+        env.getCheckpointConfig().setTolerableCheckpointFailureNumber(2);
+        // enables the experimental unaligned checkpoints
+        env.getCheckpointConfig().enableUnalignedCheckpoints();
+        // 将检查点持久化到外部存储
+        env.getCheckpointConfig().enableExternalizedCheckpoints(
+                org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+        // 如果有更近的保存点时，是否将作业回退到该检查点
+        env.getCheckpointConfig().setPreferCheckpointForRecovery(true);
+        // sets the checkpoint storage where checkpoint snapshots will be written
+        env.getCheckpointConfig().setCheckpointStorage("hdfs://hadoop102:8020/flink_tolerance");
+
+        // 并行度设置，如何不配置，线上环境，默认任务的并行度为1，即flink-conf.yaml中parallelism.default为1
+        env.setParallelism(4);
+
+        processFare(env,source);
+        env.execute("Window Processing Example");
+    }
+
+    public static void processFare(StreamExecutionEnvironment env,DataStreamSource<TaxiFare> source){
 
         SingleOutputStreamOperator<Tuple3<Long, Long, Float>> aggregatedStream = source.assignTimestampsAndWatermarks(WatermarkStrategy.<TaxiFare>forBoundedOutOfOrderness(Duration.ofSeconds(0))
                         .withTimestampAssigner((element, recordTimestamp) -> element.startTime.toEpochMilli()))
@@ -45,16 +64,16 @@ public class $09ProcessWindowFuncationWithAggregation {
                 .returns(Types.TUPLE(Types.LONG, Types.LONG, Types.FLOAT))
                 .keyBy(taxi -> taxi.f0)
                 .window(TumblingEventTimeWindows.of(Time.hours(5)))  // 使用时间窗口
-                .aggregate(new MyAggregationFunction(), new MyWindowProcessFunction());
+                .aggregate(new $09ProcessWindowFuncationWithAggregation.MyAggregationFunction(), new $09ProcessWindowFuncationWithAggregation.MyWindowProcessFunction());
 
         aggregatedStream.map((MapFunction<Tuple3<Long, Long, Float>, Tuple2<Long, Float>>) value -> Tuple2.of(value.f0, value.f2))
                 .returns(Types.TUPLE(Types.LONG, Types.FLOAT))
-                .print()
-                .setParallelism(1);
+                .print();
 
-
-        env.execute("Window Processing Example");
     }
+
+
+
 
     /**
      * 自定义聚合函数，用于处理数据聚合操作
@@ -137,6 +156,5 @@ public class $09ProcessWindowFuncationWithAggregation {
             out.collect(Tuple3.of(key, count, averageFare));
         }
     }
-
 
 }

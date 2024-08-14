@@ -20,6 +20,8 @@ import java.time.Duration;
  * ②链接的条件满足
  * 才会触发后续的窗口函数计算；
  *
+ * 值返回按照链接条件匹配的结果
+ *
  * 链接条件可以使用KeySelector放回多个字段的组合，实现多字段的链接条件
  */
 public class $08WindowJoin {
@@ -65,6 +67,7 @@ public class $08WindowJoin {
         clickStream.join(orderStream)
                 .where(data -> data.user).equalTo(data -> data.f0)
                 .window(TumblingEventTimeWindows.of(Time.seconds(5)))
+                // click 和 order 两个流中每来一个元素都调用一次JoinFunction
                 .apply(new JoinFunction<Event, Tuple3<String, String, Long>, String>() {
                     @Override
                     public String join(Event first, Tuple3<String, String, Long> second) throws Exception {
