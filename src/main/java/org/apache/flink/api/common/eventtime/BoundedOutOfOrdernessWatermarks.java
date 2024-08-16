@@ -19,6 +19,8 @@
 package org.apache.flink.api.common.eventtime;
 
 import org.apache.flink.annotation.Public;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
@@ -36,6 +38,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 @Public
 public class BoundedOutOfOrdernessWatermarks<T> implements WatermarkGenerator<T> {
 
+    private static final Logger LOG =
+            LoggerFactory.getLogger(BoundedOutOfOrdernessWatermarks.class);
     /** The maximum timestamp encountered so far. */
     private long maxTimestamp;
 
@@ -62,7 +66,7 @@ public class BoundedOutOfOrdernessWatermarks<T> implements WatermarkGenerator<T>
     @Override
     public void onEvent(T event, long eventTimestamp, WatermarkOutput output) {
         maxTimestamp = Math.max(maxTimestamp, eventTimestamp);
-        System.out.println("接受了数据：" + event);
+//        System.out.println("接受了数据：" + event);
 //        System.out.println(Thread.currentThread().getName()+"发送水印：" + (maxTimestamp - outOfOrdernessMillis - 1));
 
     }
@@ -70,6 +74,7 @@ public class BoundedOutOfOrdernessWatermarks<T> implements WatermarkGenerator<T>
     @Override
     public void onPeriodicEmit(WatermarkOutput output) {
         output.emitWatermark(new Watermark(maxTimestamp - outOfOrdernessMillis - 1));
+//        System.out.println("向下游发送水印：" + (maxTimestamp - outOfOrdernessMillis - 1));
 
     }
 }
