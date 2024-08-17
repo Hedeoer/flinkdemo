@@ -2,42 +2,30 @@ package cn.hedeoer.chapter01.source;
 
 import cn.hedeoer.common.datatypes.OrderInfo;
 import cn.hedeoer.common.utils.TimeFormat;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import jdk.nashorn.internal.parser.JSONParser;
-
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.functions.*;
+import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
-import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
-import org.apache.flink.streaming.api.scala.function.WindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.ObjectReader;
-import org.codehaus.jackson.map.deser.std.JsonNodeDeserializer;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
+
 
 // kafka connector，读取kafka数据
 /*
@@ -189,7 +177,7 @@ public class $01KafkaSource {
         }
     }
 
-    private static void parseStringToPojo(Collector<OrderInfo> out, String database, String table, JsonNode node) {
+    public static void parseStringToPojo(Collector<OrderInfo> out, String database, String table, JsonNode node) {
         if ("edu".equals(database) && "order_info".equals(table)) {
             OrderInfo orderInfo = new OrderInfo();
             orderInfo.setId(node.get("data").get("id").asLong());
