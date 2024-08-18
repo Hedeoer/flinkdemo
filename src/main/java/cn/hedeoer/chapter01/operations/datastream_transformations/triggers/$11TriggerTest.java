@@ -2,23 +2,16 @@ package cn.hedeoer.chapter01.operations.datastream_transformations.triggers;
 
 
 import cn.hedeoer.common.datatypes.TaxiFare;
-import cn.hedeoer.common.datatypes.TaxiRide;
 import cn.hedeoer.common.sources.TaxiFareGenerator;
-import cn.hedeoer.common.sources.TaxiRideGenerator;
-import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.api.common.state.ReducingState;
-import org.apache.flink.api.common.state.ReducingStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeutils.base.LongSerializer;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows;
-import org.apache.flink.streaming.api.windowing.triggers.ContinuousProcessingTimeTrigger;
 import org.apache.flink.streaming.api.windowing.triggers.Trigger;
 import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
-import org.elasticsearch.common.recycler.Recycler;
 
 /**
  * 对flink内置的ContinuousProcessingTimeTrigger的模拟效果

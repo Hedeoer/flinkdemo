@@ -20,7 +20,6 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
-import java.util.Iterator;
 import java.util.Map;
 
 // keyState 之 AggregatingState使用，需要的前置知识点mapState的使用

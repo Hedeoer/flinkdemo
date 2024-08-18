@@ -2,9 +2,7 @@ package cn.hedeoer.chapter01.state;
 
 import cn.hedeoer.common.datatypes.Event;
 import cn.hedeoer.common.sources.ClickSource;
-import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
-import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;

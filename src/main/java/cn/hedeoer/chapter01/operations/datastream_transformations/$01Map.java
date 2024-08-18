@@ -1,9 +1,6 @@
 package cn.hedeoer.chapter01.operations.datastream_transformations;
 
-import cn.hedeoer.common.datatypes.TaxiFare;
 import cn.hedeoer.common.datatypes.TaxiRide;
-import cn.hedeoer.common.sink.TaxiRideSink;
-import cn.hedeoer.common.sources.TaxiFareGenerator;
 import cn.hedeoer.common.sources.TaxiRideGenerator;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple3;

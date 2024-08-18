@@ -6,13 +6,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Random;
 
-/**
- * Copyright (c) 2020-2030 尚硅谷 All Rights Reserved
- * <p>
- * Project:  FlinkTutorial
- * <p>
- * Created by  wushengran
- */
 
 
 public class Event {

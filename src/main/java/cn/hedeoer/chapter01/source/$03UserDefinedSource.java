@@ -62,7 +62,7 @@ public class $03UserDefinedSource {
                     event.timestamp  = event.timestamp + count;
                     ctx.collect(event);
                     eventList.add(event);
-                    ++ count;
+                    count = count + 1000;
                     Thread.sleep(DURATION_PER_RECORD);
                 }
             }

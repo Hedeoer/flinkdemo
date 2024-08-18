@@ -1,14 +1,11 @@
 package cn.hedeoer.chapter01.operations.datastream_transformations.windows;
 
 import cn.hedeoer.common.datatypes.TaxiFare;
-import cn.hedeoer.common.datatypes.TaxiRide;
 import cn.hedeoer.common.sources.TaxiFareGenerator;
-import cn.hedeoer.common.sources.TaxiRideGenerator;
 import cn.hedeoer.common.utils.SinkUtil;
 import cn.hedeoer.common.utils.TimeFormat;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.api.common.functions.RichReduceFunction;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;

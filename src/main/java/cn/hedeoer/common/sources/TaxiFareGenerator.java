@@ -22,7 +22,6 @@ import cn.hedeoer.common.datatypes.TaxiFare;
 import cn.hedeoer.common.utils.DataGenerator;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 
-
 import java.time.Duration;
 import java.time.Instant;
 

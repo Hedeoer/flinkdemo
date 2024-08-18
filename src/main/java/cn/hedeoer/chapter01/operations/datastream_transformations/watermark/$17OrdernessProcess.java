@@ -1,8 +1,6 @@
 package cn.hedeoer.chapter01.operations.datastream_transformations.watermark;
 
-import cn.hedeoer.common.datatypes.TaxiFare;
 import cn.hedeoer.common.datatypes.WaterSensor;
-import cn.hedeoer.common.sources.TaxiFareGenerator;
 import cn.hedeoer.common.utils.DataUtil;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;

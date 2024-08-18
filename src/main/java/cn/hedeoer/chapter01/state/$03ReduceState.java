@@ -3,7 +3,6 @@ package cn.hedeoer.chapter01.state;
 import cn.hedeoer.common.datatypes.TaxiFare;
 import cn.hedeoer.common.sources.TaxiFareGenerator;
 import cn.hedeoer.common.utils.TimeFormat;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.state.ReducingState;
 import org.apache.flink.api.common.state.ReducingStateDescriptor;
@@ -12,14 +11,10 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
-
-import java.time.Duration;
-import java.util.Iterator;
 
 // Keyed State 之 ReducingState
 public class $03ReduceState {

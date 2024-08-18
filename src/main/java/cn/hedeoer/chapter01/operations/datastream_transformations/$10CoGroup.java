@@ -11,8 +11,6 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
-import java.util.Iterator;
-
 /**
  * Window CoGroup 算子相比与 windows join算子， cogroup的输出的结果可以保留没有join上的数据，实现 sql中的 join， left join， right join效果
  * 更加灵活，如果需要更加粒度的控制 join效果，可以使用 connect算子，结合状态，定时器等实现。
