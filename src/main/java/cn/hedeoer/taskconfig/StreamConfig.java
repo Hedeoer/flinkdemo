@@ -19,7 +19,7 @@ public class StreamConfig {
         // only two consecutive checkpoint failures are tolerated
         env.getCheckpointConfig().setTolerableCheckpointFailureNumber(2);
         // enables the experimental unaligned checkpoints
-        env.getCheckpointConfig().enableUnalignedCheckpoints();
+//        env.getCheckpointConfig().enableUnalignedCheckpoints();
         // 将检查点持久化到外部存储
         env.getCheckpointConfig().enableExternalizedCheckpoints(
                 org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
