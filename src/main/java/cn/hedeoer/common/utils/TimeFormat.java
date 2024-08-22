@@ -1,0 +1,40 @@
+package cn.hedeoer.common.utils;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class TimeFormat {
+    public static String longToString(long time)
+    {
+        ZoneId zoneId = ZoneId.of("Asia/Shanghai");
+        Instant instant = Instant.ofEpochMilli(time);
+        ZonedDateTime zonedDateTime = instant.atZone(zoneId);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String result = zonedDateTime.format(formatter);
+        return result;
+    }
+
+    public static String longToString(long time,boolean isUTC)
+    {
+        String result = null;
+        if (isUTC) {
+            Instant instant = Instant.ofEpochMilli(time);
+            result = DateTimeFormatter.ISO_INSTANT.format(instant);
+        }
+        return result;
+    }
+
+    public static Instant stringToInstant(String time){
+        //2020-01-16 16:08:20.000
+        String convertStr = time.replaceAll("\\s+", "T").replaceAll("\\.000", ".00Z");
+//        System.out.println(convertStr);
+        return Instant.parse(convertStr);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(TimeFormat.stringToInstant("2020-01-16 16:08:20.000"));
+    }
+}
