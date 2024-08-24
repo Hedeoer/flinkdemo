@@ -4,8 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
@@ -35,7 +38,7 @@ public class $00DataStreamIntegration {
 
     private static StreamExecutionEnvironment env;
     private static StreamTableEnvironment tableEnv;
-    private static DataStream<User> dataStream;
+    private static DataStream<User> steam;
     private static DataStream<Student> studentDataStream;
 
     @BeforeAll
@@ -43,7 +46,7 @@ public class $00DataStreamIntegration {
         env = StreamExecutionEnvironment.getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create(env);
         // create a DataStream
-        dataStream =
+        steam =
                 env.fromElements(
                         new User("Alice", 4, Instant.ofEpochMilli(1000)),
                         new User("Bob", 6, Instant.ofEpochMilli(1001)),
@@ -73,7 +76,7 @@ public class $00DataStreamIntegration {
         // === EXAMPLE 1 ===
 
         // derive all physical columns automatically
-        Table table = tableEnv.fromDataStream(dataStream);
+        Table table = tableEnv.fromDataStream(steam);
         table.printSchema();
         //(
         //  `name` STRING,
@@ -88,7 +91,7 @@ public class $00DataStreamIntegration {
         // but add computed columns (in this case for creating a proctime attribute column)
         // 指定处理时间列
         Table table1 = tableEnv.fromDataStream(
-                dataStream,
+                steam,
                 Schema.newBuilder()
                         .columnByExpression("proc_time_self", "PROCTIME()")
                         .build());
@@ -109,7 +112,7 @@ public class $00DataStreamIntegration {
         // 通过列的计算指定水印和水印策略
         Table table2 =
                 tableEnv.fromDataStream(
-                        dataStream,
+                        steam,
                         Schema.newBuilder()
                                 .columnByExpression("rowtime", "CAST(event_time AS TIMESTAMP_LTZ(3))")
                                 .watermark("rowtime", "rowtime - INTERVAL '10' SECOND")
@@ -134,7 +137,7 @@ public class $00DataStreamIntegration {
         // dataStream已经有水印了，此时流转化为表需要从元数据获取即可
         Table table3 =
                 tableEnv.fromDataStream(
-                        dataStream,
+                        steam,
                         Schema.newBuilder()
                                 .columnByMetadata("rowtime", "TIMESTAMP_LTZ(3)")
                                 .watermark("rowtime", "SOURCE_WATERMARK()")
@@ -157,7 +160,7 @@ public class $00DataStreamIntegration {
 
         Table table4 =
                 tableEnv.fromDataStream(
-                        dataStream,
+                        steam,
                         Schema.newBuilder()
                                 .column("event_time", "TIMESTAMP_LTZ(3)")
                                 .column("name", "STRING")
@@ -389,6 +392,50 @@ public class $00DataStreamIntegration {
         //+I[Alice, 12]
         //-U[Alice, 12]
         //+U[Alice, 14]
+    }
+
+    /**
+     * todo 7 数据类型映射,将dataStream中的类型映射到Table schema中
+     * 基于字段的位置；基于字段的名字
+     * 常见的类型比如Tuples ,pojo, Row等
+     */
+    @Test
+    public void dataTypeMapping(){
+        // 将dataStream转化为Tuple3类型的流
+        SingleOutputStreamOperator<Tuple3<String, Integer, Instant>> tupleStream = steam.map(user -> Tuple3.<String, Integer, Instant>of(user.name, user.score, user.event_time))
+                .returns(Types.TUPLE(Types.STRING, Types.INT, Types.INSTANT));
+
+        // 基于流中数据类型的固定位置,一旦为位置取了名字，就不能取别名了
+        Table table1 = tableEnv.fromDataStream(tupleStream, $("myString"), $("myInteger"), $("myInstant"));
+        // 基于流中数据类型的固定名字，更灵活，可以再取别名
+        Table table2 = tableEnv.fromDataStream(tupleStream, $("f0").as("name"), $("f1").as("age"), $("f2").as("event_time"));
+        table2.execute().print();
+
+        // 在flink中，不能被进一步拆分的数据类型称为原子类型（atomic type），比如基本数据类型，和一些无法进一步映射的类型
+        // 比如下面的例子studentDataStream中，由于Student类属性设置为final，不可被外部更改，为immutable，
+        tableEnv.fromDataStream(studentDataStream, $("name"), $("score"), $("event_time")).execute().print();
+
+        // Row类型既可以通过字段位置，也可以根据字段名字获取
+        // 示意代码如下
+
+        // DataStream of Row with two fields "name" and "age" specified in `RowTypeInfo`
+        // 将dataStream中User类型转化为Row
+         DataStream<Row> stream = steam.map(user -> Row.of(user.name, user.score));
+
+        // Convert DataStream into Table with renamed field names "myName", "myAge" (position-based)
+        Table table3 = tableEnv.fromDataStream(steam, $("myName"), $("myAge"));
+
+        // Convert DataStream into Table with renamed fields "myName", "myAge" (name-based)
+        Table table4 = tableEnv.fromDataStream(steam, $("name").as("myName"), $("age").as("myAge"));
+
+        // Convert DataStream into Table with projected field "name" (name-based)
+        Table table5 = tableEnv.fromDataStream(steam, $("name"));
+
+        // Convert DataStream into Table with projected and renamed field "myName" (name-based)
+        Table table6 = tableEnv.fromDataStream(steam, $("name").as("myName"));
+
+
+
     }
 
 
