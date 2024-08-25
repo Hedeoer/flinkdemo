@@ -114,7 +114,9 @@ public class TaxiFare implements Serializable {
                 + ","
                 + tolls
                 + ","
-                + totalFare;
+                + totalFare
+                + ","
+                + currency;
     }
 
     @Override

@@ -209,6 +209,6 @@ public class DataGenerator {
 
         Random random = new Random();
         String currencyName = currencyNames[random.nextInt(currencyNames.length)];
-        return "JPY";
+        return currencyName;
     }
 }
