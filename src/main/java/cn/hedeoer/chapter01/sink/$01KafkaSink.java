@@ -9,7 +9,6 @@ import org.apache.flink.streaming.connectors.kafka.KafkaSerializationSchema;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
@@ -20,8 +19,7 @@ import java.util.Properties;
 * */
 public class $01KafkaSink {
 
-    @Test
-    public void testKafkaSink() throws Exception {
+    public static void main(String[] args) throws Exception {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStreamSource<Event> source = env.addSource(new $03UserDefinedSource.EventGenerator());

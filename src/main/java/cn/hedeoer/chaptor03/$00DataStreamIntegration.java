@@ -17,9 +17,6 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 
@@ -41,7 +38,6 @@ public class $00DataStreamIntegration {
     private static DataStream<User> steam;
     private static DataStream<Student> studentDataStream;
 
-    @BeforeAll
     public static void init() {
         env = StreamExecutionEnvironment.getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create(env);
@@ -70,7 +66,6 @@ public class $00DataStreamIntegration {
      * 对于只有数据不断插入的数据流，转化为table 的情况
      * 1. todo 1 只有append情况的流转化为表
      */
-    @Test
     public void InsertOnlyStream() {
 
         // === EXAMPLE 1 ===
@@ -192,7 +187,6 @@ public class $00DataStreamIntegration {
      * 对于包含复杂数据结构的数据流，转化为table 的情况
      * 1. todo 2 只有append情况的流转化为表，且字段是复合数据类型
      */
-    @Test
     public void InsertOnlyStreamForComplexDataStructure() {
 
         // 对于pojo是immutable的，每条流记录只能是ROW类型，列名为f0
@@ -244,7 +238,6 @@ public class $00DataStreamIntegration {
      * 针对only-appendly的数据流，测试创建临时视图
      * todo 3 测试创建临时视图
      */
-    @Test
     public void InsertOnlyStreamForCreateTemporaryView () {
         // create some DataStream
         DataStream<Tuple2<Long, String>> dataStream = env.fromElements(
@@ -269,7 +262,6 @@ public class $00DataStreamIntegration {
      * 只有不断插入，没有更新和删除的特征的表才能直接使用toDataStream方法转化为流
      * 其他情况考虑toChangelogStream方法
      */
-    @Test
     public void InsertOnlyStreamForToDataStream () throws Exception {
         tableEnv.executeSql(
                 "CREATE TABLE GeneratedTable "
@@ -300,7 +292,6 @@ public class $00DataStreamIntegration {
      * 处理逻辑：retract 流处理更复杂，可以处理没有主键的数据，而 upsert 流假设有主键，因此能更高效地处理更新操作。
      * 性能：upsert 流由于减少了操作符的数量，在拥有主键时性能更优，但 retract 流更加通用，适用性更广。
      */
-    @Test
     public void changLogStream_fromChangelogStream(){
         // === EXAMPLE 1 ===
 
@@ -376,7 +367,6 @@ public class $00DataStreamIntegration {
      * todo 6 将具有changlog类型的表转化为流
      * @throws Exception
      */
-    @Test
     public void changLogStream_toChangelogStream () throws Exception {
         Table simpleTable = tableEnv
                 .fromValues(row("Alice", 12), row("Alice", 2), row("Bob", 12))
@@ -399,7 +389,6 @@ public class $00DataStreamIntegration {
      * 基于字段的位置；基于字段的名字
      * 常见的类型比如Tuples ,pojo, Row等
      */
-    @Test
     public void dataTypeMapping(){
         // 将dataStream转化为Tuple3类型的流
         SingleOutputStreamOperator<Tuple3<String, Integer, Instant>> tupleStream = steam.map(user -> Tuple3.<String, Integer, Instant>of(user.name, user.score, user.event_time))

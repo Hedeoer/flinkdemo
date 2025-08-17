@@ -16,10 +16,6 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AscendingTimestampExtractor;
 import org.apache.flink.util.Collector;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +37,6 @@ public class $01CEP_Individual {
     private static StreamExecutionEnvironment env;
     private static SingleOutputStreamOperator<TaxiFare> source;
 
-    @BeforeAll
     public static void init() {
         env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -79,7 +74,6 @@ public class $01CEP_Individual {
      *
      * @throws Exception
      */
-    @Test
     public void simpleCondition() throws Exception {
         // 1. 创建模式
         Pattern<TaxiFare, TaxiFare> pattern = Pattern.<TaxiFare>begin("cashStream")
@@ -120,7 +114,6 @@ public class $01CEP_Individual {
      * 过滤出每个司机过路费连续免费的情况（tolls = 0.0）
      * 如果出现收费中断的情况，后续还有连续2次免费的情况也要考虑在内
      */
-    @Test
     public void QuantifiersPattern() {
         KeyedStream<TaxiFare, Long> keyedStream = source.keyBy(fare -> fare.driverId);
 
@@ -177,7 +170,6 @@ public class $01CEP_Individual {
      * next(),followBy(),followByAny()
      * 第一次使用现金支付，第二次使用信用卡支付，并且第三次收款金额大于50的情况
      */
-    @Test
     public void patternGroup() {
 
         // 模式1
@@ -229,7 +221,6 @@ public class $01CEP_Individual {
         //[(15,16,17)]
     }
 
-    @AfterAll
     public static void after() throws Exception {
         // Ensure the Flink job is executed
         env.execute();

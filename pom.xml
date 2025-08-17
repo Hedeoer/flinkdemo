@@ -226,12 +226,6 @@
         </dependency>
 
 
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>RELEASE</version>
-            <scope>provided</scope>
-        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.flink/flink-runtime-web -->
         <dependency>
@@ -265,6 +259,12 @@
             <artifactId>annotations</artifactId>
             <version>17.0.0</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
         </dependency>
 
 

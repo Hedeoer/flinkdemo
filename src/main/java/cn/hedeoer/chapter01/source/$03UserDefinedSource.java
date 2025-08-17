@@ -8,8 +8,6 @@ import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 
 
@@ -18,8 +16,7 @@ import java.util.List;
 public class $03UserDefinedSource {
 
 
-    @Test
-    public void testUserDefinedSource() throws Exception {
+    public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.addSource(new EventGenerator())
                 .print();

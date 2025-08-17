@@ -11,9 +11,6 @@ import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.expressions.Expression;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 
@@ -27,7 +24,6 @@ public class $00_01TimeAttributes {
     private static DataStream<User> steam;
     private static DataStream<Student> studentDataStream;
 
-    @BeforeAll
     public static void init() {
         env = StreamExecutionEnvironment.getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create(env);
@@ -53,7 +49,6 @@ public class $00_01TimeAttributes {
      * 1.流中有水印,比如流steam
      * 2.流中无水印，比如流studentDataStream
      */
-    @Test
     public void getEventTimeFromStream() {
         //1. 流中有水印,比如流steam，
         // ①可以通过Schema.newBuilder()从元数据获取水印，即SOURCE_WATERMARK()方法；
@@ -109,7 +104,6 @@ public class $00_01TimeAttributes {
 
     }
 
-    @Test
     public void getProcessTimeFromStream() {
 
         // 定义 Schema 并将 Processing Time 作为时间字段

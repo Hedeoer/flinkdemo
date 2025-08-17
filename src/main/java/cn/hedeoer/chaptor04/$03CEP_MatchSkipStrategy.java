@@ -12,9 +12,6 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AscendingTimestampExtractor;
 import org.apache.flink.util.Collector;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -29,7 +26,6 @@ public class $03CEP_MatchSkipStrategy {
     private static StreamExecutionEnvironment env;
     private static SingleOutputStreamOperator<TaxiFare> source;
 
-    @BeforeAll
     public static void init() {
         env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -66,7 +62,6 @@ public class $03CEP_MatchSkipStrategy {
      * 匹配后的跳过策略;默认是no_skip，即全部展示
      * 常用的策略还有：skipToNext,skipPastLastEvent
      */
-    @Test
     public void skipStrategy() {
 
 //        AfterMatchSkipStrategy.skipPastLastEvent();
@@ -103,7 +98,6 @@ public class $03CEP_MatchSkipStrategy {
                 .print();
     }
 
-    @AfterAll
     public static void after() throws Exception {
         // Ensure the Flink job is executed
         env.execute();
