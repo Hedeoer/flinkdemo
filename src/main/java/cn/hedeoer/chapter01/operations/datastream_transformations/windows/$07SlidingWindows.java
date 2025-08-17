@@ -4,7 +4,6 @@ import cn.hedeoer.common.datatypes.TaxiRide;
 import cn.hedeoer.common.sources.TaxiRideGenerator;
 import cn.hedeoer.common.utils.SinkUtil;
 import cn.hedeoer.common.utils.TimeFormat;
-import com.sun.java.swing.plaf.windows.resources.windows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
