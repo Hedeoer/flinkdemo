@@ -19,11 +19,12 @@ public class $11RegularJoin_LeftJoin {
     public static void main(String[] args) throws Exception {
 
         Configuration conf = new Configuration();
-        conf.setString("table.exec.state.ttl", "5 s");
+        conf.setString("table.exec.state.ttl", "60 s");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
         StreamConfig.setCheckPoint(env);
+        env.setParallelism(1);
 
         DataStreamSource<WaterSensor> sensorWater = env.fromElements(
                 new WaterSensor("sensor_1", 1000L, 10L),
@@ -34,13 +35,13 @@ public class $11RegularJoin_LeftJoin {
                 new WaterSensor("sensor_2", 6000L, 60L)
         );
 
-        SingleOutputStreamOperator<Sensor> sensorTypes = env.socketTextStream("hadoop103", 9999)
-                .map(line -> new Sensor(line.split(",")[0], line.split(",")[1]));
+//        SingleOutputStreamOperator<Sensor> sensorTypes = env.socketTextStream("localhost", 9999)
+//                .map(line -> new Sensor(line.split(",")[0], line.split(",")[1]));
 
-//        DataStreamSource<Sensor> sensorTypes = env.fromElements(
-//                new Sensor("sensor_1", "温度传感器"),
-//                new Sensor("sensor_2", "湿度传感器")
-//        );
+        DataStreamSource<Sensor> sensorTypes = env.fromElements(
+                new Sensor("sensor_1", "温度传感器"),
+                new Sensor("sensor_2", "湿度传感器")
+        );
 
         Table t1 = tableEnv.fromDataStream(sensorWater, $("sensorId"), $("ts"), $("waterLine"));
         Table t2 = tableEnv.fromDataStream(sensorTypes, $("id"), $("type"));
@@ -53,6 +54,7 @@ public class $11RegularJoin_LeftJoin {
                         "left JOIN t2 ON t1.sensorId = t2.id"
         ).print();
 
+        env.execute();
 
     }
 

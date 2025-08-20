@@ -21,7 +21,9 @@ import java.time.ZoneId;
 
 /**
  * Timer的使用
- *
+ * 1. 定时器触发的时机：当使用事件时间注册的定时器，这会在水印推进到定义的触发时间会触发，执行onTimer方法；使用processing时间注册的定时器，会在处理时间推进到定义的触发时间会触发，执行onTimer方法
+ * 2. 定时器的销毁，和合并：定时器也是状态的一部分，过多的定时器会消耗过多的资源，需要注意定时器的销毁和合并。详见：https://nightlies.apache.org/flink/flink-docs-release-2.1/docs/dev/datastream/operators/process_function/#timer-coalescing
+ * 3. 定时器使用场景：它通常用于清理缓存、触发窗口计算或执行其他基于时间的任务
  */
 public class $01TimerImplements {
 
