@@ -15,6 +15,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.flink.streaming.api.TimeDomain;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
@@ -89,11 +90,38 @@ public class $05LeftJoinDealWithPostCommentByDataStream {
         // connect
         post.connect(comment)
                 .keyBy(Post::getId, Comment::getPostId)
-                        .process(new MyKeyProcessFunctions())
+                        .process(new PostCommentLeftJoinFunction())
                                 .map(new MyFilterMapFunction())
                                         .print();
 
+/*
+演示思路：
+输入为：
+post主题：
+{"user_id":14,"id":151,"title":"First post for key 151.","body":"..."}
+{"user_id":20,"id":200,"title":"Some other post.","body":"..."}
 
+输入comment主题：
+{"post_id":151,"id":980,"user_id":69,"body":"First comment for post 151."}
+{"post_id":151,"id":982,"user_id":70,"body":"Second comment for post 151."}
+
+等待20秒。
+
+输入post主题：
+{"user_id":30,"id":300,"title":"A final post to advance watermark.","body":"..."}
+{"user_id":14,"id":151,"title":"The same post 151, arriving AGAIN.","body":"..."}
+
+结果：
+151 :==>  :==> 0 :==>   post主题的元素先来，此时comment主题的元素还没有来，此时left join的结果为空
+200 :==>  :==> 0 :==>   post主题的元素先来，此时comment主题的元素还没有来，此时left join的结果为空
+151 :==>  :==> 980 :==> comment主题的元素来了，此时left join有可关联的值
+151 :==>  :==> 982 :==> comment主题的元素来了，此时left join有可关联的值
+300 :==>  :==> 0 :==>   经过20秒，此时post主题到来新元素，右表为空
+151 :==>  :==> 0 :==>   经过20秒，此时post主题到来151的旧数据，此时由于超过了20秒限制，comment中 980，982的元素都已经过期清理了，此时left join结果为空
+
+
+
+* */
         env.execute();
 
 
@@ -121,111 +149,122 @@ public class $05LeftJoinDealWithPostCommentByDataStream {
 
 
     /**
-     * CoProcessFunction实现left join的效果
-     * select
+     * 使用 KeyedCoProcessFunction 实现流的 LEFT JOIN。
+     * <p>
+     * 目标SQL:
+     * SELECT
      *     t1.id as post_id,
      *     t1.title as post_title,
      *     t2.id as comment_id,
      *     t2.body as comment_body
-     * from posts t1
-     * left join comments t2
-     * on t1.id = t2.post_id
-     *
-     * 初始化：
-     * 创建 postValueStatue 存储所有到达的post数据
-     * 创建 commentListStatue 存储所有到达的comment数据
-     *
-     *
-     *对post数据的处理：
-     * 为该时间点创建一个事件时间定时器（5秒）
-     * 存储该post数据到postValueStatue
-     * 查询comment数据的情况：
-     * 1. 如果commentListStatue为空，则输出一条（post，null）的数据
-     * 2. 如果commentListStatue不为空，则遍历commentListStatue，将post数据与comment数据进行关联，并输出；且删除之前的事件时间定时器，重新设置一个事件时间定时器（5秒）
-     *
-     * 对于comment数据的处理：
-     * 为该时间点创建一个事件时间定时器（5秒）
-     * 存储comment数据到commentListStatue
-     * 查询post数据情况：
-     * 1. 如果postValueStatue为空，不做任何处理
-     * 2. 如果postValueStatue不为空，将comment数据与post数据进行关联，并输出一条（post，comment）数据，并删除之前的事件时间定时器，创建一个5秒后的事件时间定时器
-     *
-     * 定时器的触发：表示5秒定时已到
-     * 清理postValueStatue
-     * 清理commentListStatue
-     *
-     *
-     *
+     * FROM posts t1
+     * LEFT JOIN comments t2
+     * ON t1.id = t2.post_id
+     * <p>
+     * 实现思路:
+     * 1. 使用 Flink 的 keyed state 来缓存先进来的数据 (可能是 Post 或 Comment)。
+     * 2. 当左表 (Post) 的数据到达时，它必须被输出。如果此时右表 (Comment) 的数据已经存在于状态中，则进行 join；否则，输出 (post, null)。
+     * 3. 当右表 (Comment) 的数据到达时，如果左表 (Post) 的数据已经存在，则进行 join；否则，仅将 Comment 存入状态等待 Post。
+     * 4. 使用事件时间定时器来自动清理长时间没有新数据到达的 key 所对应的状态，防止状态无限增长。
      */
-    private static class MyKeyProcessFunctions extends KeyedCoProcessFunction<Long, Post, Comment, Tuple2<Post, Comment>>{
+    private static class PostCommentLeftJoinFunction extends KeyedCoProcessFunction<Long, Post, Comment, Tuple2<Post, Comment>> {
 
-        private ListState<Comment> commentListStates;
+        // 缓存 Post
         private ValueState<Post> postValueState;
-        private ValueState<Long> previousTimerFireTimeValueStatue;
+        // 缓存 Comment
+        private ListState<Comment> commentListState;
+        // 存储定时器触发的时间戳
+        private ValueState<Long> cleanupTimerState;
 
         @Override
         public void open(Configuration parameters) throws Exception {
-            postValueState = getRuntimeContext().getState(new ValueStateDescriptor<Post>("postValueState", Post.class));
-            commentListStates = getRuntimeContext().getListState(new ListStateDescriptor<Comment>("commentListStates", Comment.class));
-            previousTimerFireTimeValueStatue = getRuntimeContext().getState(new ValueStateDescriptor<>("previousTimerFireTimeValueStatue", Long.class));
-
+            postValueState = getRuntimeContext().getState(
+                    new ValueStateDescriptor<>("postValueState", Post.class));
+            commentListState = getRuntimeContext().getListState(
+                    new ListStateDescriptor<>("commentListStates", Comment.class));
+            cleanupTimerState = getRuntimeContext().getState(
+                    new ValueStateDescriptor<>("cleanupTimerState", Long.class));
         }
 
+        /**
+         * 处理 Post (左流)
+         */
         @Override
-        public void processElement1(Post value, KeyedCoProcessFunction<Long, Post, Comment, Tuple2<Post, Comment>>.Context ctx, Collector<Tuple2<Post, Comment>> out) throws Exception {
-            postValueState.update( value);
+        public void processElement1(Post post, Context ctx, Collector<Tuple2<Post, Comment>> out) throws Exception {
+            // 1. 更新 Post 状态
+            postValueState.update(post);
 
-            boolean hasJoined = false;
-            boolean needDeleteTimer = false;
-            for (Comment comment : commentListStates.get()) {
-                out.collect(Tuple2.of(value, comment));
-                if (comment != null) {
-                    needDeleteTimer = true;
-                    hasJoined = true;
+            // 2. 检查是否有已缓存的 Comment
+            Iterable<Comment> comments = commentListState.get();
+            if (comments == null || !comments.iterator().hasNext()) {
+                    out.collect(Tuple2.of(post, null));
+            } else {
+                // 2b. 如果有，将 post 与每一个已缓存的 comment 进行 join
+                for (Comment comment : comments) {
+                    out.collect(Tuple2.of(post, comment));
                 }
             }
 
-            if (!hasJoined) {
-                out.collect(Tuple2.of(value, null));
-            }
-
-            Long planFireTime = previousTimerFireTimeValueStatue.value();
-            if (needDeleteTimer && planFireTime != null) {
-                ctx.timerService().deleteEventTimeTimer(planFireTime);
-            }
-
-            ctx.timerService().registerEventTimeTimer(ctx.timestamp() + 5 * 1000L);
-            previousTimerFireTimeValueStatue.update(ctx.timestamp() + 5 * 1000L);
-
+            // 3. 重置定时器
+            resetCleanupTimer(ctx);
         }
 
+        /**
+         * 处理 Comment (右流)
+         */
         @Override
-        public void processElement2(Comment value, KeyedCoProcessFunction<Long, Post, Comment, Tuple2<Post, Comment>>.Context ctx, Collector<Tuple2<Post, Comment>> out) throws Exception {
+        public void processElement2(Comment comment, Context ctx, Collector<Tuple2<Post, Comment>> out) throws Exception {
+            // 1. 无论如何，都将 Comment 存入列表状态
+            commentListState.add(comment);
 
-            commentListStates.add(value);
+            // 2. 检查 Post 是否已经到达
+            Post post = postValueState.value();
+            if (post != null) {
+                // 2a. 如果 Post 已存在，输出 join 结果
+                out.collect(Tuple2.of(post, comment));
+            }
+            // 2b. 如果 Post 不存在，则不输出，等待 Post 到达。
 
-            if (postValueState.value() != null) {
-                out.collect(Tuple2.of(postValueState.value(), value));
-                Long planFireTime = previousTimerFireTimeValueStatue.value();
-                if (planFireTime != null) {
-                    ctx.timerService().deleteEventTimeTimer(planFireTime);
+            // 3. 重置定时器
+            resetCleanupTimer(ctx);
+        }
+
+        /**
+         *
+         * postValueState：存储 Post 的状态。
+         * commentListState：存储 Comment 的状态。
+         * cleanupTimerState：存储定时器的触发时间。
+         *
+         * 触发条件：20秒内没有新数据到达的 key 所对应的状态，由于相同的key共享同一份（postValueState commentListState cleanupTimerState），则清空该key的所有状态
+         * 表示该key对应所有数据的状态已经过期，可以进行清理。
+         */
+        @Override
+        public void onTimer(long timestamp, OnTimerContext ctx, Collector<Tuple2<Post, Comment>> out) throws Exception {
+            // 只处理处理时间定时器
+            if (ctx.timeDomain() == TimeDomain.PROCESSING_TIME) {
+                if (cleanupTimerState.value() != null && timestamp == cleanupTimerState.value()) {
+                    postValueState.clear();
+                    commentListState.clear();
+                    cleanupTimerState.clear();
                 }
             }
-            ctx.timerService().registerEventTimeTimer(ctx.timestamp() + 5 * 1000L);
-            previousTimerFireTimeValueStatue.update(ctx.timestamp() + 5 * 1000L);
-
-
         }
 
-        @Override
-        public void onTimer(long timestamp, KeyedCoProcessFunction<Long, Post, Comment, Tuple2<Post, Comment>>.OnTimerContext ctx, Collector<Tuple2<Post, Comment>> out) throws Exception {
-            if (previousTimerFireTimeValueStatue.value() != null && timestamp == previousTimerFireTimeValueStatue.value() ) {
-                postValueState.clear();
-                commentListStates.clear();
-                previousTimerFireTimeValueStatue.clear();
+
+        // 使用处理时间注册定时器
+        private void resetCleanupTimer(Context ctx) throws Exception {
+            Long currentTimer = cleanupTimerState.value();
+            if (currentTimer != null) {
+                ctx.timerService().deleteProcessingTimeTimer(currentTimer);
             }
+
+            // 使用处理时间 + 20秒作为清理时间
+            long newCleanupTime = ctx.timerService().currentProcessingTime() + 20000L;
+            ctx.timerService().registerProcessingTimeTimer(newCleanupTime);
+            cleanupTimerState.update(newCleanupTime);
         }
     }
+
 
     private static class MyFilterMapFunction implements MapFunction<Tuple2<Post, Comment>, String> {
         @Override
